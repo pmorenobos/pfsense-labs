@@ -1,0 +1,87 @@
+# pfSense en VirtualBox sobre Linux (Ubuntu 24)
+
+## 📌 Descripción
+Laboratorio completo desde cero hasta conectividad funcional.
+
+## 🔧 Requisitos
+- Ubuntu 24
+- VirtualBox
+- ISO pfSense
+
+## ⚙️ Instalación VirtualBox
+1) apt install -y software-properties-common ca-certificates curl gnupg dkms build-essential linux-headers-$(uname -r)
+
+2) add-apt-repository -y universe
+3) apt update
+
+4) install -d -m 0755 /etc/apt/keyrings
+
+5) curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor -o /etc/apt/keyrings/oracle-virtualbox.gpg
+
+6) echo "deb [signed-by=/etc/apt/keyrings/oracle-virtualbox.gpg] https://download.virtualbox.org/virtualbox/debian noble contrib" \
+  | sudo tee /etc/apt/sources.list.d/virtualbox.list > /dev/null
+
+7) apt update
+
+8) apt install -y virtualbox-7.2
+
+9) /sbin/vboxconfig
+
+10) lsmod | grep -i vbox
+
+11) usermod -aG vboxusers $USER
+
+12) VBoxManage -v
+
+## ⚙️ Como localizar el modelo de las tarjetas de red.
+A)
+ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute
+       valid_lft forever preferred_lft forever
+2: eno1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state (((UP))) group default qlen 1000
+    link/ether 00:25:90:78:90:07 brd ff:ff:ff:ff:ff:ff
+    altname enp0s25
+    inet 192.168.2.111/24 brd 192.168.2.255 scope global dynamic noprefixroute eno1
+       valid_lft 6949sec preferred_lft 6949sec
+    inet6 fe80::225:90ff:fe78:9007/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp2s0f0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether e8:39:35:0f:db:7e brd ff:ff:ff:ff:ff:ff
+4: enp2s0f1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether e8:39:35:0f:db:7f brd ff:ff:ff:ff:ff:ff
+5: enp4s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state (((UP))) group default qlen 1000
+    link/ether 00:25:90:78:90:06 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.99.68/24 brd 192.168.99.255 scope global dynamic noprefixroute enp4s0
+       valid_lft 82552sec preferred_lft 82552sec
+    inet6 2806:290:880a:45fc:2327:b991:de17:8d39/64 scope global temporary dynamic
+       valid_lft 600952sec preferred_lft 82294sec
+    inet6 2806:290:880a:45fc:225:90ff:fe78:9006/64 scope global dynamic mngtmpaddr
+       valid_lft 2591941sec preferred_lft 2591941sec
+    inet6 fe80::225:90ff:fe78:9006/64 scope link
+       valid_lft forever preferred_lft forever
+
+B) identificar el hw id de cada interfaz
+root@bos-vboxsrv:/home/xuser# readlink -f /sys/class/net/eno1/device
+/sys/devices/pci0000:00/0000:00:19.0
+root@bos-vboxsrv:/home/xuser# readlink -f /sys/class/net/enp4s0/device
+/sys/devices/pci0000:00/0000:00:1c.4/0000:04:00.0
+
+o con ethtool
+
+root@bos-vboxsrv:/home/xuser# ethtool -i eno1 | grep bus-info
+bus-info: 0000:00:19.0
+root@bos-vboxsrv:/home/xuser# ethtool -i enp4s0 | grep bus-info
+bus-info: 0000:04:00.0
+
+C) 
+root@bos-vboxsrv:/home/xuser# lspci -nn -s 0000:00:19.0
+00:19.0 Ethernet controller [0200]: Intel Corporation 82579LM Gigabit Network Connection (Lewisville) [8086:1502] (rev 05)
+root@bos-vboxsrv:/home/xuser# lspci -nn -s 0000:04:00.0
+04:00.0 Ethernet controller [0200]: Intel Corporation 82574L Gigabit Network Connection [8086:10d3]
+
+
+
